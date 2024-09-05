@@ -1,0 +1,243 @@
+#include <iostream>
+#include <list>
+#include <unordered_map>
+#include <stack>
+#include <vector>
+#include <climits>
+#include <queue>
+using namespace std;
+
+int T = 0;
+vector<pair<int, int>> forwardedge;
+vector<pair<int, int>> backedge;
+vector<pair<int, int>> crossedge;
+vector<pair<int, int>> treeedge;
+
+class Graph {
+public:
+    unordered_map<int, list<int>> adjlist;
+    unordered_map<int, int> st;
+    unordered_map<int, int> et;
+    unordered_map<int, int> parent;
+    unordered_map<int, string> color;
+    unordered_map<int, int> distance;
+    stack<int> topoStack;
+    int graphType;  // 0 for directed, 1 for undirected
+
+    Graph(int type) : graphType(type) {}  // Constructor
+
+    void addedge(int u, int v) {
+        adjlist[u].push_back(v);
+        if (graphType == 1) {  // If undirected graph
+            adjlist[v].push_back(u);
+        }
+    }
+
+    void printadjlist() {
+        for (auto i : adjlist) {
+            cout << i.first << "-> {";
+            for (auto neighbour : i.second) {
+                cout << neighbour << ", ";
+            }
+            cout << "}" << endl;
+        }
+    }
+
+    void bfs(int src) {
+        queue<int> q;
+
+        // Push the src:-
+        q.push(src);
+        color[src] = "grey";
+        distance[src] = 0;
+
+        while (!q.empty()) {
+            int front = q.front();
+            cout << front << "->" << endl;
+            cout << "Shortest distance from src node: " << distance[front] << endl;
+            cout << "Parent of node in BFS tree: " << parent[front] << endl;
+            q.pop();
+
+            for (auto nbr : adjlist[front]) {
+                int nbrdata = nbr;
+
+                if (color[nbrdata] == "white") {
+                    q.push(nbrdata);
+                    color[nbrdata] = "grey";
+                    distance[nbrdata] = distance[front] + 1;
+                    parent[nbrdata] = front;
+                } else if (graphType == 0 && parent[front] != nbr && color[nbrdata] == "grey") {
+                    cout << "Cycle is present using BFS in directed graph" << endl;
+                } else if (graphType == 1 && nbrdata != parent[front]) {
+                    cout << "Cycle is present in undirected graph using BFS" << endl;
+                }
+            }
+            color[front] = "black";
+        }
+    }
+
+    void bfshelp() {
+        for (auto x : adjlist) {
+            color[x.first] = "white";
+            parent[x.first] = -1;
+            distance[x.first] = INT_MAX;
+        }
+        for (auto x : adjlist) {
+            if (color[x.first] == "white") {
+                bfs(x.first);
+            }
+        }
+    }
+
+    void dfs(int src) {
+        color[src] = "grey";
+        st[src] = ++T;
+
+        for (auto nbr : adjlist[src]) {
+            int nbrdata = nbr;
+            if (color[nbrdata] == "white") {
+                treeedge.push_back({src, nbrdata});
+                parent[nbrdata] = src;
+                color[nbrdata] = "grey";
+                dfs(nbrdata);
+            } else if (graphType == 0 && color[nbrdata] == "grey" && nbrdata != parent[src]) {
+                backedge.push_back({src, nbrdata});
+            } else if (graphType == 1 && nbrdata != parent[src] && color[nbrdata] == "grey") {
+                backedge.push_back({src, nbrdata});
+            } else if (color[nbrdata] == "black") {
+                if (st[src] < st[nbrdata]) {
+                    forwardedge.push_back({src, nbrdata});
+                } else {
+                    crossedge.push_back({src, nbrdata});
+                }
+            }
+        }
+        et[src] = ++T;
+        color[src] = "black";
+        topoStack.push(src);
+        cout << src << "->" << st[src] << "/" << et[src] << "," << parent[src] << endl;
+    }
+
+    void dfshelp() {
+        for (auto x : adjlist) {
+            color[x.first] = "white";
+            parent[x.first] = -1;
+        }
+        for (auto x : adjlist) {
+            if (color[x.first] == "white") {
+                dfs(x.first);
+            }
+        }
+    }
+
+    void toposort() {
+        if (graphType == 1) {
+            cout << "Topological sort is only valid for directed graphs." << endl;
+            return;
+        }
+
+        for (auto x : adjlist) {
+            color[x.first] = "white";
+        }
+
+        for (auto x : adjlist) {
+            if (color[x.first] == "white") {
+                dfs(x.first);
+            }
+        }
+
+        cout << "Topological Sort: ";
+        while (!topoStack.empty()) {
+            cout << topoStack.top() << " ";
+            topoStack.pop();
+        }
+        cout << endl;
+    }
+
+    bool iscycle_dfs() {
+        return !backedge.empty();
+    }
+
+    bool iscycle_kahns() {
+        if (graphType == 1) {
+            cout << "Kahn's algorithm is only valid for directed graphs." << endl;
+            return false;
+        }
+
+        unordered_map<int, int> indegree;
+
+        // Initialize indegree for all nodes
+        for (auto x : adjlist) {
+            indegree[x.first] = 0;
+        }
+
+        for (auto x : adjlist) {
+            for (auto nbr : adjlist[x.first]) {
+                indegree[nbr]++;
+            }
+        }
+
+        queue<int> q;
+        int cnt = 0;
+
+        for (auto i : adjlist) {
+            if (indegree[i.first] == 0) {
+                q.push(i.first);
+            }
+        }
+
+        while (!q.empty()) {
+            int front = q.front();
+            q.pop();
+            cnt++;
+            for (auto nbr : adjlist[front]) {
+                indegree[nbr]--;
+                if (indegree[nbr] == 0) {
+                    q.push(nbr);
+                }
+            }
+        }
+
+        return (cnt != adjlist.size());
+    }
+};
+
+int main() {
+    Graph g(0);  // 0 for directed graph, 1 for undirected graph
+    g.addedge(0, 1);
+    g.addedge(2, 0);
+    g.addedge(1, 3);
+    g.addedge(3, 2);
+    g.addedge(3, 4);
+    g.addedge(4, 5);
+    g.printadjlist();
+    g.toposort();
+    unordered_map<int, bool> vis;
+    g.bfshelp();
+    cout << endl;
+
+    g.dfshelp();
+    cout << "\nTree Edges:" << endl;
+    for (auto e : treeedge) {
+        cout << e.first << " -> " << e.second << endl;
+    }
+
+    cout << "\nBack Edges:" << endl;
+    for (auto e : backedge) {
+        cout << e.first << " -> " << e.second << endl;
+    }
+
+    cout << "\nForward Edges:" << endl;
+    for (auto e : forwardedge) {
+        cout << e.first << " -> " << e.second << endl;
+    }
+
+    cout << "\nCross Edges:" << endl;
+    for (auto e : crossedge) {
+        cout << e.first << " -> " << e.second << endl;
+    }
+    cout << "Cycle present (DFS): " << g.iscycle_dfs() << endl;
+    cout << "Cycle present (Kahn's Algorithm): " << g.iscycle_kahns() << endl;
+
+    return 0;
+}
