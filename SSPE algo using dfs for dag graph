@@ -1,0 +1,82 @@
+#include<iostream>
+#include<list>
+#include<unordered_map>
+#include<stack>
+#include<vector>
+#include<climits>
+#include<queue>
+using namespace std;
+
+class Graph {
+    public:
+    unordered_map<int,list<pair<int,int>>>adjlist;
+    stack<int> topostack;
+    unordered_map<int,bool>vis;
+    vector<int> ans;
+
+    Graph(int vertices) {
+        ans.resize(vertices, INT_MAX);
+    }
+    // {src,{nbr,wt}}
+    void addedge(int u,int v,int wt){
+        adjlist[u].push_back({v,wt});
+    }
+    void printadjlist(){
+        for(auto x:adjlist){
+            cout<<x.first<<"->";
+            for(auto y:adjlist[x.first]){
+                cout<<"{ "<<y.first<<","<<y.second<<" }";
+            }
+            cout<<endl;
+        }
+    }
+
+    void dfs(int src){
+        vis[src]=true;
+        for(auto nbr:adjlist[src]){
+            int nbrdata=nbr.first;
+            if(!vis[nbrdata]){
+                vis[nbrdata]=true;
+                dfs(nbrdata);
+            }   
+        }
+        topostack.push(src);
+    }
+    
+
+    void sssp(int src){
+        dfs(src);
+        ans[src]=0;
+        while(!topostack.empty()){
+            int top=topostack.top();
+            topostack.pop();
+            if(ans[top]!=INT_MAX){
+                for(auto nbr:adjlist[top]){
+                int nbrdata=nbr.first;
+                ans[nbrdata]=min(ans[top]+nbr.second,ans[nbrdata]);
+            }
+            }
+            
+        }
+    }
+
+};
+int main(){
+    Graph g(7); 
+
+    g.addedge(0, 1, 5);
+    g.addedge(0, 2, 3);
+    g.addedge(1, 3, 3);
+    g.addedge(2, 1, 2);
+    g.addedge(2, 3, 5);
+
+    g.addedge(4, 5, 1);
+    g.addedge(5, 6, 2);
+    g.printadjlist();
+    
+    g.sssp(0);
+    for(int i=0;i<g.ans.size();i++){
+        cout<<g.ans[i]<<" ";
+    }
+
+}
