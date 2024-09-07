@@ -1,0 +1,98 @@
+#include <iostream>
+#include<unordered_map>
+#include<list>
+#include<vector>
+#include<stack>
+#include<limits.h>
+using namespace std;
+
+class Graph{
+    public:
+    unordered_map<int,list<pair<int,int>>>adjList;
+     Graph(int n) {
+        
+        }
+    //u,{v,wt}
+    void addEdge(int u, int v, int wt, bool direction) {
+		//direction -> 0 -> undorected
+		//direction -> 1 -> directed
+		if(direction == 0) {
+			adjList[u].push_back({v,wt});
+			adjList[v].push_back({u,wt});
+		}
+		else {
+			adjList[u].push_back({v,wt});
+		}
+	}
+    void printAdjList() {
+		for(auto i: adjList) {
+			cout << i.first << "-> ";
+			for(auto j: i.second) {
+				cout <<"{"<<j.first<<", "<<j.second <<"}, ";
+			}cout<<endl;
+		}
+	}
+    void bellmannford(int n,int src){
+
+        vector<int>dist(n,INT_MAX);
+         dist[src] = 0;
+        for(int i=1;i<=n-1;i++){
+            for(auto a:adjList){
+            int u=a.first;
+            for(auto x:a.second){
+                int v=x.first;
+                int wt=x.second;
+                if( dist[u]!=INT_MAX && dist[u]+wt<dist[v] ){
+                    dist[v]=dist[u]+wt;
+                }
+            }
+        }
+        }
+        bool update = false;
+        for (auto a : adjList) {
+            int u = a.first;
+            for (auto x : a.second) {
+                int v = x.first;
+                int wt = x.second;
+                if (dist[u] != INT_MAX && dist[u] + wt < dist[v]) {
+                    update = true; 
+                    break;
+                }
+            }
+            if (update) break;  
+        }
+        if(update){
+            cout<<"negative cycle is detected in the graph"<<endl;
+        }
+        else{
+            cout<<"No negative cycle is detected in the graph"<<endl;
+            for(auto x:dist){
+                cout<<x<<" ";
+            }
+        }
+        
+    }
+
+    
+};
+
+int main(){
+    // Graph g(5);
+    // g.addEdge(0,1,-1,1);
+    // g.addEdge(1,2,2,1);
+    // g.addEdge(2,3,-3,1);
+    // g.addEdge(3,4,5,1);
+    // g.addEdge(0,4,4,1);
+    // g.addEdge(1,4,3,1);
+    // g.addEdge(1,3,2,1);
+    // g.addEdge(3,1,1,1);
+    // g.printAdjList();
+    // g.bellmannford(5,0);
+    Graph g1(3);
+    g1.addEdge(0,1,-2,1);
+    g1.addEdge(1,2,-3,1);
+    g1.addEdge(2,0,-4,1);
+    g1.printAdjList();
+    g1.bellmannford(3,0);
+
+}
