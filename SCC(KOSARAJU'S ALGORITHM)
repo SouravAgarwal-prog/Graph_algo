@@ -1,0 +1,105 @@
+#include <iostream>
+#include<unordered_map>
+#include<list>
+#include<vector>
+#include<stack>
+#include<limits.h>
+using namespace std;
+
+class Graph {
+public:
+	
+	unordered_map<int,list<int>> adjList;
+    unordered_map<int,list<int>> adjListT;
+    stack<int>toposort;
+    unordered_map<int,bool>vis1;
+    unordered_map<int,bool>vis2;
+    Graph(int n){
+
+    }
+	void addEdge(int u, int v,bool direction) {
+		//direction -> 0 -> undorected
+		//direction -> 1 -> directed
+		if(direction == 0) {
+			adjList[u].push_back(v);
+			adjList[v].push_back(u);
+            adjListT[u].push_back(v);
+			adjListT[v].push_back(u);
+		}
+		else {
+			adjList[u].push_back(v);
+            adjListT[v].push_back(u);
+			
+		}
+	}
+
+	void printAdjList() {
+		for(auto i: adjList) {
+			cout << i.first << "-> ";
+			for(auto j: i.second) {
+				cout <<"{"<<j<<"}, ";
+			}cout<<endl;
+		}
+	}
+
+    void dfs1(int src,stack<int> & toposort){
+        vis1[src]=true;
+        for(auto nbr:adjList[src]){
+            if(!vis1[nbr]){
+                dfs1(nbr,toposort);
+            }
+        }
+        toposort.push(src);
+
+    }
+    void dfs2(int src){
+        vis2[src]=true;
+        cout<<src<<" ";
+        for(auto nbr:adjListT[src]){
+            if(!vis2[nbr]){
+                dfs2(nbr);
+            }
+        }
+    }
+    void kosaraju(int n){
+        //get th odering:-
+        for(int i=0; i<n; i++ ){
+			if(!vis1[i]) {
+				dfs1(i,toposort);
+			}
+		}
+
+        int cnt=0;
+        while(!toposort.empty()){
+            int node=toposort.top();
+            toposort.pop();
+            if(!vis2[node]){
+                cout<<"SCC #"<<cnt+1<<endl;
+                dfs2(node);
+                cnt++;
+                cout<<endl;
+            }
+        }
+    }
+
+
+};
+
+int main(){
+    Graph g(8);
+	g.addEdge(0, 1, 1);
+	g.addEdge(1, 2, 1);
+	g.addEdge(2, 3, 1);
+	g.addEdge(3, 0, 1);
+
+	g.addEdge(2, 4, 1);
+
+	g.addEdge(4, 5, 1);
+	g.addEdge(5, 6, 1);
+	g.addEdge(6, 4, 1);
+
+	g.addEdge(6, 7, 1);
+	int n = 8;
+   g.kosaraju(n);
+  
+}
